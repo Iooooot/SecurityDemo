@@ -13,6 +13,10 @@ public enum ResultCode {
 
     VALIDATE_FAILED(1002, "参数校验失败"),
 
+    UNAUTHORIZED(401,"尚未登录，请先登录"),
+
+    FORBIDDEN(403,"权限不足"),
+
     ERROR(5000, "未知错误");
 
     private int code; //状态码

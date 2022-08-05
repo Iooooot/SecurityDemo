@@ -3,6 +3,7 @@ package com.wht.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wht.entity.LoginUser;
 import com.wht.entity.User;
+import com.wht.mapper.MenuMapper;
 import com.wht.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private MenuMapper menuMapper;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //根据用户名查询用户信息
@@ -26,9 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if(Objects.isNull(user)){
             throw new RuntimeException("用户名或密码错误");
         }
-        //TODO 根据用户查询权限信息 添加到LoginUser中
-
         //封装成UserDetails对象返回
-        return new LoginUser(user);
+        return new LoginUser(user,menuMapper.selectPermsByUserId(user.getId()));
     }
 }
