@@ -5,7 +5,7 @@ import com.wht.entity.ResponseEntityDemo;
 import com.wht.entity.User;
 
 public interface LoginServcie {
-    ResponseEntityDemo login(User user);
+    ResponseEntityDemo login(User user,String ip);
 
     ResponseEntityDemo logout();
 

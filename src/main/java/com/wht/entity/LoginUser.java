@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
@@ -67,5 +68,22 @@ public class LoginUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        LoginUser loginUser = (LoginUser) o;
+        return Objects.equals(user.getUserName(), loginUser.user.getUserName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user.getUserName());
     }
 }

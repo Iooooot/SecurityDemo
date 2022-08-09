@@ -51,6 +51,17 @@ public class ResponseEntityDemo<T> {
     }
 
     /***
+     * 请求处理失败后使用的工具方法（需要传错误信息、状态码）
+     * @param code
+     * @param message
+     * @param <Type>
+     * @return
+     */
+    public static <Type> ResponseEntityDemo<Type> failed(int code,String message) {
+        return new ResponseEntityDemo<Type>(code, message, null);
+    }
+
+    /***
      * 请求处理失败后使用的工具方法（需要传状态码以及错误信息）
      * @param resultCode
      * @param <Type>

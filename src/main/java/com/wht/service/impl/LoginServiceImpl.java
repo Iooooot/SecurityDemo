@@ -5,7 +5,7 @@ import com.wht.entity.LoginUser;
 import com.wht.entity.ResponseEntityDemo;
 import com.wht.entity.User;
 import com.wht.service.LoginServcie;
-import com.wht.utils.JwtUtil;
+import com.wht.utils.JWTUtils;
 import com.wht.utils.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,7 +28,7 @@ public class LoginServiceImpl implements LoginServcie {
     private RedisUtil redisUtil;
 
     @Override
-    public ResponseEntityDemo login(User user) {
+    public ResponseEntityDemo login(User user,String ip) {
         //AuthenticationManager authenticate进行用户认证
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getUserName(),user.getPassword());
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
@@ -39,11 +39,13 @@ public class LoginServiceImpl implements LoginServcie {
         //如果认证通过了，使用userid生成一个jwt jwt存入ResponseResult返回
         LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
         String userid = loginUser.getUser().getId().toString();
-        String jwt = JwtUtil.createJWT(userid);
+        String jwt = JWTUtils.createToken(loginUser.getUser(),ip);
         Map<String,String> map = new HashMap<>();
         map.put("token",jwt);
         //把完整的用户信息存入redis  userid作为key
         redisUtil.set("login:"+userid,loginUser);
+        //将token存redis中，有效期7天
+        redisUtil.set("login:token:"+userid, jwt,604800);
         return ResponseEntityDemo.successWithData(map);
     }
 
@@ -55,6 +57,7 @@ public class LoginServiceImpl implements LoginServcie {
         Long userid = loginUser.getUser().getId();
         //删除redis中的值
         redisUtil.del("login:"+userid);
+        redisUtil.del("login:token:"+userid);
         return ResponseEntityDemo.successWithoutData();
     }
 }

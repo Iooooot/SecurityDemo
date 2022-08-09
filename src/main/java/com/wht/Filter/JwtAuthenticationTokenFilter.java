@@ -1,10 +1,14 @@
 package com.wht.Filter;
 
 
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.wht.entity.APIException;
 import com.wht.entity.LoginUser;
-import com.wht.utils.JwtUtil;
+import com.wht.utils.CusAccessObjectUtil;
+import com.wht.utils.JWTUtils;
 import com.wht.utils.RedisUtil;
-import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,20 +38,32 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+
         //解析token
-        String userid;
         try {
-            Claims claims = JwtUtil.parseJWT(token);
-            userid = claims.getSubject();
+            JWTUtils.verifyToken(token, CusAccessObjectUtil.getIpAddress(request));
+        } catch (SignatureVerificationException e) {
+            throw new APIException(401,"签名失效,请重新登录");
+        } catch (TokenExpiredException e) {
+            redisUtil.del("login:token:"+JWTUtils.getClaimByName(token,"uid").asInt());
+            throw new APIException(401,"token过期,请重新登录");
+        } catch (AlgorithmMismatchException e) {
+            throw new APIException(401,"token算法不一致,请重新登录");
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("token非法");
+            throw new APIException(401,"token无效,请重新登录");
+
+        }
+
+        //判断token是否跟redis中一致，不一致说明已经被其他客户端挤掉
+        String cacheToken = (String) redisUtil.get("login:token:" + JWTUtils.getClaimByName(token, "uid").asInt());
+        if(cacheToken != null && !cacheToken.equals(token)){
+            throw new APIException(401,"您已在另一台设备登录，本次登录已下线!");
         }
         //从redis中获取用户信息
-        String redisKey = "login:" + userid;
+        String redisKey = "login:" + JWTUtils.getClaimByName(token,"uid").asInt();
         LoginUser loginUser = (LoginUser) redisUtil.get(redisKey);
         if(Objects.isNull(loginUser)){
-            throw new RuntimeException("用户未登录");
+            throw new APIException(401,"用户未登录");
         }
         //存入SecurityContextHolder
         //TODO 获取权限信息封装到Authentication中

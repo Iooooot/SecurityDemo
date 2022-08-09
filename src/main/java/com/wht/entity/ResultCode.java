@@ -13,7 +13,7 @@ public enum ResultCode {
 
     VALIDATE_FAILED(1002, "参数校验失败"),
 
-    UNAUTHORIZED(401,"尚未登录，请先登录"),
+    UNAUTHORIZED(401,"认证错误，请重新登录"),
 
     FORBIDDEN(403,"权限不足"),
 
